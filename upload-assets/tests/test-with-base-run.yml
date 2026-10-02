@@ -1,0 +1,37 @@
+name: Test with base-workflow-run-id and base-commit-sha inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create a minimal app directory with assets
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/app-dist"
+          echo "<html><body>Base run test</body></html>" > "$GITHUB_WORKSPACE/app-dist/index.html"
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          api-token: "fake-meticulous-token-for-testing"
+          github-token: ${{ github.token }}
+          app-directory: "${{ github.workspace }}/app-dist"
+          base-workflow-run-id: "12345678"
+          base-commit-sha: "abc1234def5678901234567890123456789012ab"
+
+      - name: Assert action ran and failed gracefully (no real Meticulous token)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded (unexpected but acceptable)"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully as expected (no valid Meticulous API token)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

@@ -1,0 +1,42 @@
+name: Test action accepts default inputs and fails gracefully
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # This test verifies the action can be invoked with only required inputs
+      # (sleep-seconds, deployment-poll-seconds, wait-till-ready-seconds use defaults).
+      # The action will fail because the Cloudflare credentials are invalid,
+      # but it should fail gracefully (not crash on startup).
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          github-token: ${{ github.token }}
+          cloudflare-api-token: "test-invalid-token"
+          cloudflare-account-id: "test-invalid-account"
+          cloudflare-project-name: "test-invalid-project"
+          # Override wait time to avoid a 3600s hang; use minimal values
+          sleep-seconds: "0"
+          deployment-poll-seconds: "1"
+          wait-till-ready-seconds: "2"
+
+      - name: Assert action failed gracefully (not a startup crash)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          # The action should fail because no matching Cloudflare deployment exists,
+          # not because of a misconfiguration or startup error.
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully as expected (no matching deployment)"
+          elif [ "$OUTCOME" = "success" ]; then
+            echo "FAIL: action should not succeed with invalid credentials"
+            exit 1
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

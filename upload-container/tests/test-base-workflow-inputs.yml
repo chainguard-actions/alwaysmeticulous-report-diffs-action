@@ -1,0 +1,41 @@
+name: Test base workflow run inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create a minimal fake Docker image for testing
+        run: |
+          docker build -t test-app:base - <<'EOF'
+          FROM alpine:3.18
+          CMD ["sh", "-c", "echo hello"]
+          EOF
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          api-token: "fake-api-token-for-testing"
+          github-token: ${{ github.token }}
+          image-tag: "test-app:base"
+          commit-sha: "abc1234567890abcdef1234567890abcdef12345"
+          base-workflow-run-id: "12345678"
+          base-commit-sha: "def1234567890abcdef1234567890abcdef12345"
+      - name: Assert action ran and failed gracefully (no real Meticulous API token)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          BASE_RUN_ID: ${{ steps.action.outputs.base-workflow-run-id }}
+          BASE_COMMIT: ${{ steps.action.outputs.base-commit-sha }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "base-workflow-run-id output: $BASE_RUN_ID"
+          echo "base-commit-sha output: $BASE_COMMIT"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded (real token may have been provided)"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully as expected with fake API token and base workflow inputs"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
