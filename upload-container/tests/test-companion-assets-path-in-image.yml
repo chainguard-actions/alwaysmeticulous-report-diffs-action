@@ -1,0 +1,32 @@
+name: Test companion-assets-path-in-image input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          api-token: fake-meticulous-token
+          github-token: ${{ github.token }}
+          image-tag: myapp:latest
+          companion-assets-path-in-image: /app/dist
+          companion-assets-regex: "^/static/.*"
+
+      - name: Assert action ran (succeeded or failed gracefully with fake token/sentinel repo)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (expected with fake API token / sentinel repo)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

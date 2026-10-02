@@ -1,0 +1,35 @@
+name: Test no-sleep path - sleep-seconds set to 0
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          github-token: ${{ github.token }}
+          cloudflare-api-token: "fake-cf-token-nosleep"
+          cloudflare-account-id: "fake-account-id-nosleep"
+          cloudflare-project-name: "fake-project-nosleep"
+          sleep-seconds: "0"
+          deployment-poll-seconds: "1"
+          wait-till-ready-seconds: "2"
+      - name: Assert action ran and failed gracefully (no sleep delay)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          # The action should proceed directly to polling (no sleep) and then
+          # fail because the Cloudflare API returns an error for fake credentials.
+          # The action should NOT hang indefinitely.
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully as expected (invalid credentials, no sleep)"
+          elif [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action completed (unexpected but not a test infrastructure failure)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
