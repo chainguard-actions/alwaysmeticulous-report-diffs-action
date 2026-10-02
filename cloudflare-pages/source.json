@@ -2,6 +2,7 @@
   "owner": "alwaysmeticulous",
   "repo": "report-diffs-action",
   "version": "v1.80.0",
+  "path": "cloudflare-pages",
   "commit_sha": "bf25bd1fac489b2968da571289e1594cc2a38b97",
   "url": "https://github.com/alwaysmeticulous/report-diffs-action",
   "policy_sha": "d636be7e43ef829af6e853da6b3c7566db9f72fe",

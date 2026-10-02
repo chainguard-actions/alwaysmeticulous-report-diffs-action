@@ -1,0 +1,36 @@
+name: Test with base-workflow-run-id and base-commit-sha inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Pull a small real Docker image to use as image-tag
+        run: |
+          docker pull hello-world:latest
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          api-token: "fake-meticulous-token"
+          github-token: ${{ github.token }}
+          image-tag: "hello-world:latest"
+          base-workflow-run-id: "12345678901"
+          base-commit-sha: "abc1234567890abcdef1234567890abcdef12345"
+
+      - name: Assert action ran and failed gracefully (no real API token)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully as expected (no real Meticulous API token)"
+          elif [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded unexpectedly (real token may be configured)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

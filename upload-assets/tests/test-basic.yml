@@ -1,0 +1,36 @@
+name: Test basic usage - missing API token fails gracefully
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create app directory with sample assets
+        run: |
+          mkdir -p /tmp/test-app
+          echo "<html><body>Hello</body></html>" > /tmp/test-app/index.html
+          echo "body { color: red; }" > /tmp/test-app/style.css
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          api-token: "invalid-token-for-testing"
+          github-token: ${{ github.token }}
+          app-directory: /tmp/test-app
+
+      - name: Assert action ran and failed gracefully with invalid API token
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully as expected with invalid API token"
+          elif [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded (unexpected but acceptable)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

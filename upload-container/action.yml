@@ -1,0 +1,89 @@
+name: "Meticulous - Upload Container"
+description: "Upload a Docker container to Meticulous for testing."
+inputs:
+  api-token:
+    description: "Meticulous API token."
+    required: true
+  github-token:
+    description: "GITHUB_TOKEN or a repo scoped PAT."
+    required: true
+    default: ${{ github.token }}
+  image-tag:
+    description: |
+      The local Docker image tag to upload to Meticulous for testing (e.g., 'myapp:latest' or 'myapp:abc123').
+    required: true
+  container-port:
+    description: |
+      The port the container listens on. If not provided, Meticulous will inject a PORT
+      environment variable and expect the container to listen on that port.
+    required: false
+  container-env:
+    description: |
+      Environment variables to pass to the container, one per line in KEY=VALUE format. Example:
+        FOO=bar
+        BAZ=qux
+    required: false
+  container-health-check-endpoint:
+    description: |
+      The HTTP path used for health checks on the container (e.g. '/health'). Defaults to '/'
+      if not provided.
+    required: false
+  commit-sha:
+    description: |
+      The commit SHA to associate the uploaded container with. If not provided, the action will try to read it
+      from the checked-out git repository, falling back to the GITHUB_SHA environment variable. Provide this
+      explicitly when running without 'actions/checkout' (e.g. in a job that only builds or pulls a Docker image).
+    required: false
+  companion-assets-folder:
+    description: |
+      The folder to upload companion assets from. This is typically not needed. At most one of
+      'companion-assets-folder', 'companion-assets-zip' and 'companion-assets-path-in-image' may be provided.
+    required: false
+  companion-assets-zip:
+    description: |
+      The path to a zip file to upload companion assets from. This is typically not needed. At most one of
+      'companion-assets-folder', 'companion-assets-zip' and 'companion-assets-path-in-image' may be provided.
+    required: false
+  companion-assets-path-in-image:
+    description: |
+      A path to a file or directory inside the uploaded Docker image (e.g. '/app/dist') to extract and serve as
+      the companion assets bundle. This is typically not needed. At most one of 'companion-assets-folder',
+      'companion-assets-zip' and 'companion-assets-path-in-image' may be provided.
+    required: false
+  companion-assets-regex:
+    description: |
+      The regex to check when deciding if a request should be served from the companion assets. Required if any
+      of 'companion-assets-folder', 'companion-assets-zip' or 'companion-assets-path-in-image' is provided.
+    required: false
+  base-workflow-run-id:
+    description: |
+      GitHub workflow run ID of a base build already dispatched by an ensure-base
+      step in another job. Not needed when ensure-base ran in this job, where the
+      run is picked up from the environment automatically.
+      Pass base-commit-sha alongside it. Without that, the run is waited on
+      unchecked and a warning is emitted, because there is no way to tell whether
+      it is building the base this step resolved.
+    required: false
+  base-commit-sha:
+    description: |
+      The base commit the run in base-workflow-run-id is building, as reported by
+      that ensure-base step's base-commit-sha output. This step resolves the base
+      for itself and waits on that run only when the two agree; otherwise it
+      dispatches its own base build.
+    required: false
+
+outputs:
+  base-workflow-run-id:
+    description: |
+      GitHub workflow run ID of the base build this step waited on or dispatched,
+      if any.
+  base-commit-sha:
+    description: |
+      The base commit that base-workflow-run-id is building, if any.
+runs:
+  using: node24
+  main: "../out/upload-container.entrypoint.js"
+  post: "../out/upload-container.post-step.entrypoint.js"
+branding:
+  color: purple
+  icon: camera

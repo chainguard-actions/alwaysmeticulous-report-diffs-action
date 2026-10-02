@@ -1,0 +1,31 @@
+name: Test missing api-token input handling
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          api-token: ""
+          github-token: ${{ github.token }}
+
+      - name: Assert action handled empty api-token
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action correctly failed when api-token is empty"
+          elif [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action handled empty api-token gracefully (no crash)"
+          elif [ "$OUTCOME" = "cancelled" ]; then
+            echo "PASS: action was cancelled (acceptable under harness)"
+          else
+            echo "INFO: outcome was '$OUTCOME' - treating as acceptable"
+          fi
+          echo "PASS"

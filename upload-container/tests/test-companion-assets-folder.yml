@@ -1,0 +1,42 @@
+name: Test with companion-assets-folder input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Pull a small real Docker image to use as image-tag
+        run: |
+          docker pull hello-world:latest
+
+      - name: Create a companion assets folder with sample files
+        run: |
+          mkdir -p /tmp/companion-assets
+          echo '{"version": "1.0.0"}' > /tmp/companion-assets/manifest.json
+          echo 'console.log("app");' > /tmp/companion-assets/app.js
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          api-token: "fake-meticulous-token"
+          github-token: ${{ github.token }}
+          image-tag: "hello-world:latest"
+          companion-assets-folder: "/tmp/companion-assets"
+          companion-assets-regex: "^/(app\\.js|manifest\\.json)"
+
+      - name: Assert action ran and failed gracefully (no real API token)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully as expected (no real Meticulous API token)"
+          elif [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded unexpectedly (real token may be configured)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

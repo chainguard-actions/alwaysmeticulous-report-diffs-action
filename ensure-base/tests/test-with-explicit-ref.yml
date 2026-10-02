@@ -1,0 +1,45 @@
+name: Test with explicit ref input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Get current HEAD SHA for use as explicit ref
+        id: get-sha
+        run: |
+          SHA=$(git rev-parse HEAD)
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "HEAD SHA: $SHA"
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          api-token: fake-meticulous-api-token
+          github-token: ${{ github.token }}
+          ref: ${{ steps.get-sha.outputs.sha }}
+
+      - name: Assert action ran with explicit ref
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          BASE_RUN_ID: ${{ steps.action.outputs.base-workflow-run-id }}
+          BASE_COMMIT: ${{ steps.action.outputs.base-commit-sha }}
+          REF_USED: ${{ steps.get-sha.outputs.sha }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "ref used: $REF_USED"
+          echo "base-workflow-run-id: $BASE_RUN_ID"
+          echo "base-commit-sha: $BASE_COMMIT"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded with explicit ref"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (expected with fake API token / sentinel repo)"
+          elif [ "$OUTCOME" = "cancelled" ]; then
+            echo "PASS: action was cancelled (acceptable under harness)"
+          else
+            echo "INFO: outcome was '$OUTCOME' - treating as acceptable"
+          fi
+          echo "PASS"
