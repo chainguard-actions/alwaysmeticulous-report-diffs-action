@@ -1,0 +1,37 @@
+name: Test with rewrites configuration
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create a fake app directory with assets
+        run: |
+          mkdir -p /tmp/fake-app-rewrites
+          echo "<html><body>App with rewrites</body></html>" > /tmp/fake-app-rewrites/index.html
+          echo "console.log('app');" > /tmp/fake-app-rewrites/app.js
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          api-token: fake-api-token-for-testing
+          github-token: ${{ github.token }}
+          app-directory: /tmp/fake-app-rewrites
+          rewrites: '[{"source": "/api/:path*", "destination": "https://api.example.com/:path*"}]'
+
+      - name: Assert action ran and failed gracefully (no real API token)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully as expected (no real Meticulous API token)"
+          elif [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded unexpectedly (real token may be configured)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

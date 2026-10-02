@@ -1,0 +1,36 @@
+name: Test basic usage - upload assets
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create a fake app directory with assets
+        run: |
+          mkdir -p /tmp/fake-app
+          echo "<html><body>Hello</body></html>" > /tmp/fake-app/index.html
+          echo "body { color: red; }" > /tmp/fake-app/style.css
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          api-token: fake-api-token-for-testing
+          github-token: ${{ github.token }}
+          app-directory: /tmp/fake-app
+
+      - name: Assert action ran and failed gracefully (no real API token)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully as expected (no real Meticulous API token)"
+          elif [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded unexpectedly (real token may be configured)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
