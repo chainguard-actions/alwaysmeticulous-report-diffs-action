@@ -1,0 +1,51 @@
+name: Test timeout - action exits quickly when deployment never becomes ready
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Record start time
+        id: start-time
+        run: echo "start=$(date +%s)" >> $GITHUB_OUTPUT
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          github-token: ${{ github.token }}
+          cloudflare-api-token: fake-cf-token-timeout
+          cloudflare-account-id: fake-account-id-timeout
+          cloudflare-project-name: fake-project-timeout
+          sleep-seconds: "0"
+          deployment-poll-seconds: "2"
+          wait-till-ready-seconds: "2"
+
+      - name: Assert action failed and completed within a reasonable time
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          START: ${{ steps.start-time.outputs.start }}
+        run: |
+          echo "outcome: $OUTCOME"
+          END=$(date +%s)
+          ELAPSED=$((END - START))
+          echo "elapsed seconds: $ELAPSED"
+
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed as expected (deployment never became ready)"
+          elif [ "$OUTCOME" = "success" ]; then
+            echo "FAIL: action unexpectedly succeeded with fake credentials"
+            exit 1
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
+
+          # Ensure it didn't hang for too long (should fail within ~60 seconds)
+          if [ "$ELAPSED" -gt 120 ]; then
+            echo "FAIL: action took too long ($ELAPSED seconds), expected timeout within 120s"
+            exit 1
+          fi
+          echo "PASS: completed within acceptable time ($ELAPSED seconds)"

@@ -1,0 +1,15 @@
+{
+  "status": "unbundlable",
+  "entries": [
+    {
+      "path": "../out/upload-assets.entrypoint.js",
+      "status": "unbundlable",
+      "reason": "entry path is absolute or escapes the action root"
+    },
+    {
+      "path": "../out/upload-assets.post-step.entrypoint.js",
+      "status": "unbundlable",
+      "reason": "entry path is absolute or escapes the action root"
+    }
+  ]
+}
