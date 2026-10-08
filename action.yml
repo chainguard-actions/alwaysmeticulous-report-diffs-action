@@ -1,0 +1,86 @@
+name: "Meticulous - Report Diffs"
+description: "Run automated Meticulous tests"
+inputs:
+  api-token:
+    description: "Meticulous API token"
+    required: true
+  github-token:
+    description: "GITHUB_TOKEN or a repo scoped PAT."
+    required: true
+    default: ${{ github.token }}
+  app-url:
+    description: |
+      The URL to execute the tests against. This URL should serve the code from the current commit (e.g. a localhost URL served up by a local server).
+      This will almost always have to be specified. It is mostly useful to omit this if `appUrl` differs between test
+      cases within the same test run. In those cases it is expected all test cases to contain have `appUrl` set.
+    required: false
+  use-deployment-url:
+    description: If set to 'true' Meticulous will test against the 'environmentUrl' of the latest deployment of the current commit.
+    required: true
+    default: "false"
+  allowed-environments:
+    description: |
+      To only be used when 'use-deployment-url' is set to true. If set will ignore any deployments to environments with names not in this list. The names of multiple environments can be seperated by new lines.
+
+      If allowed-environments is not specified then Meticulous will just test against the first deployment.
+
+      You find your environment names in the 'Environments' tab in the 'Settings' tab of your GitHub repository.
+    required: false
+  tests-file:
+    description: |
+      The path to the meticulous.json file containing the list of tests you want to run.
+
+      If not set a search will be performed to find a meticulous.json file in the current directory or the nearest parent directory.
+    required: false
+  max-retries-on-failure:
+    description: |
+      The number of times to re-run any replays that give a visual diff. If any of the retryed replays differs from that in the first replay
+      then the original diff will be marked as a flake, and ignored.
+
+      Setting to 0 disables this feature.
+    required: true
+    default: 5
+  parallel-tasks:
+    description: Number of tasks to run in parallel (defaults to two per CPU)
+    required: false
+  localhost-aliases:
+    description: Additional aliases for localhost, as a list of comma-separated values
+    required: false
+  max-allowed-color-difference:
+    description: A number between 0 and 1. The maximum difference in color/brightness for a pixel to ignore, and treat as unchanged. A value of 1.0 would accept any difference in color, while a value of 0.0 would accept no difference in color. Uses a measure of perceived color differences based on the paper "Measuring perceived color difference using YIQ NTSC transmission color space in mobile applications" by Y. Kotsarenko and F. Ramos. See https://jsfiddle.net/vpfwsxby/12/ for example differences.
+    required: true
+    default: 0.01
+  max-allowed-proportion-of-changed-pixels:
+    description: Maximum acceptable proportion of pixels that exceed the `max-allowed-color-difference`, as a number between 0 and 1. Differences in a smaller or equal proportional of pixels to this will be ignored. Defaults to 0.00001, or about 20 pixels in a 1920 x 1080 px visual snapshot.
+    required: true
+    default: 0.00001
+  test-suite-id:
+    description: Used to differentiate between different Meticulous test suites if you run this action multiple times as part of a single workflow.
+    required: false
+  additional-ports:
+    description: Ports the client needs to access the application in addition to the one in the app URL, as a list of comma-separated values
+    required: false
+
+outputs: {}
+runs:
+  using: "docker"
+  image: "docker://ghcr.io/alwaysmeticulous/report-diffs-action:releases-v1@sha256:6e9fbfd74c94bf1190020ab88b08de77a10a9eff982eaa05459228d69792c4cf"
+  post-entrypoint: "/app/main-post-step.sh"
+  env:
+    API_TOKEN: ${{ inputs.api-token }}
+    GITHUB_TOKEN: ${{ inputs.github-token }}
+    APP_URL: ${{ inputs.app-url }}
+    TESTS_FILE: ${{ inputs.tests-file }}
+    MAX_RETRIES_ON_FAILURE: ${{ inputs.max-retries-on-failure }}
+    PARALLEL_TASKS: ${{ inputs.parallel-tasks }}
+    LOCALHOST_ALIASES: ${{ inputs.localhost-aliases }}
+    MAX_ALLOWED_COLOR_DIFFERENCE: ${{ inputs.max-allowed-color-difference }}
+    MAX_ALLOWED_PROPORTION_OF_CHANGED_PIXELS: ${{ inputs.max-allowed-proportion-of-changed-pixels }}
+    USE_DEPLOYMENT_URL: ${{ inputs.use-deployment-url }}
+    ALLOWED_ENVIRONMENTS: ${{ inputs.allowed-environments }}
+    TEST_SUITE_ID: ${{ inputs.test-suite-id }}
+    METICULOUS_TELEMETRY_SAMPLE_RATE: "0.01"
+    ADDITIONAL_PORTS: ${{ inputs.additional-ports }}
+branding:
+  color: purple
+  icon: camera

@@ -1,0 +1,85 @@
+{
+  "name": "action-meticulous-run",
+  "version": "1.0.0",
+  "description": "Run Meticulous tests",
+  "license": "Unliscensed",
+  "private": true,
+  "main": "dist/main.entrypoint.js",
+  "post-step": "out/post-step.entrypoint.js",
+  "cloud-compute": "out/cloud-compute.entrypoint.js",
+  "upload-assets": "out/upload-assets.entrypoint.js",
+  "upload-container": "out/upload-container.entrypoint.js",
+  "files": [
+    "dist",
+    "out"
+  ],
+  "scripts": {
+    "clean": "rimraf dist tsconfig.tsbuildinfo",
+    "build": "node build.js",
+    "format": "prettier --write src",
+    "format:check": "prettier --check src",
+    "lint": "eslint src --ext=ts,tsx,js --cache",
+    "lint:commit": "eslint --cache $(git diff --relative --name-only --diff-filter=ACMRTUXB master | grep  -E \"(.js$|.ts$|.tsx$)\")",
+    "lint:fix": "eslint src --ext=ts,tsx,js --cache --fix",
+    "test": "vitest run",
+    "sentry:sourcemaps": "./scripts/upload-sentry-sourcemaps.sh"
+  },
+  "//": "Upgrading `replay-orchestrator-launcher`? Consider bumping the environment version `LOGICAL_ENVIRONMENT_VERSION` in `constants.ts` if the new version includes visible changes.",
+  "dependencies": {
+    "@actions/core": "^1.11.1",
+    "@actions/github": "^5.1.1",
+    "@alwaysmeticulous/client": "^2.289.2",
+    "@alwaysmeticulous/common": "^2.287.1",
+    "@alwaysmeticulous/remote-replay-launcher": "^2.289.2",
+    "@alwaysmeticulous/replay-orchestrator-launcher": "^2.289.2",
+    "@alwaysmeticulous/sentry": "^2.287.1",
+    "@sentry/cli": "^2.58.4",
+    "@sentry/node": "^9.47.1",
+    "joi": "^17.13.3",
+    "lodash.debounce": "^4.0.8",
+    "loglevel": "^1.9.2",
+    "loglevel-plugin-prefix": "^0.8.4",
+    "luxon": "^3.7.2",
+    "retry": "^0.13.1",
+    "source-map-support": "^0.5.21",
+    "yaml": "^2.8.2"
+  },
+  "devDependencies": {
+    "@alwaysmeticulous/api": "^2.288.2",
+    "@alwaysmeticulous/sdk-bundles-api": "^2.288.2",
+    "@alwaysmeticulous/tunnels-client": "^2.287.1",
+    "@types/lodash.debounce": "^4.0.9",
+    "@types/luxon": "^3.7.1",
+    "@types/node": "^20.19.33",
+    "@types/retry": "^0.12.5",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
+    "esbuild": "^0.20.2",
+    "eslint": "^8.57.1",
+    "eslint-import-resolver-typescript": "^3.10.1",
+    "eslint-plugin-import": "^2.32.0",
+    "prettier": "^2.8.8",
+    "rimraf": "^5.0.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^4.9.5",
+    "vitest": "^4.0.18"
+  },
+  "engines": {
+    "node": ">= 20"
+  },
+  "packageManager": "pnpm@10.27.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alwaysmeticulous/action-meticulous-run.git"
+  },
+  "keywords": [],
+  "author": {
+    "name": "The Meticulous Team",
+    "email": "eng@meticulous.ai",
+    "url": "https://meticulous.ai"
+  },
+  "bugs": {
+    "url": "https://github.com/alwaysmeticulous/action-meticulous-run/issues"
+  },
+  "homepage": "https://github.com/alwaysmeticulous/action-meticulous-run"
+}

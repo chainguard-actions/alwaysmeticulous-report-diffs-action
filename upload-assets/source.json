@@ -1,0 +1,17 @@
+{
+  "owner": "alwaysmeticulous",
+  "repo": "report-diffs-action",
+  "version": "v1.72.0",
+  "path": "upload-assets",
+  "commit_sha": "f63c949deff5bbdbe50392f6ac074ffb5e4e953e",
+  "url": "https://github.com/alwaysmeticulous/report-diffs-action",
+  "policy_sha": "d636be7e43ef829af6e853da6b3c7566db9f72fe",
+  "test_policy_sha": "843adf9e4b8f85d0c08b27b9d0b09dd094b54702",
+  "test_agent_version": "2",
+  "harden_agent_version": "2",
+  "node_artifact": {
+    "gcs_uri": "gs://prod-actions-node-artifacts/node-artifacts/alwaysmeticulous/report-diffs-action/v1.72.0/sha256-9addb4c7f3afa99b03f24f9e05cb87d274a63ae9ba30c94f02c75e85d133e9de.tar.gz",
+    "sha256": "9addb4c7f3afa99b03f24f9e05cb87d274a63ae9ba30c94f02c75e85d133e9de",
+    "size_bytes": 29
+  }
+}
