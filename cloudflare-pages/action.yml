@@ -92,7 +92,7 @@ runs:
         printf 'url=%s\n' "$safe_url" >> "$GITHUB_OUTPUT"
         printf 'environment=%s\n' "$safe_env" >> "$GITHUB_OUTPUT"
     - name: Create GitHub deployment from Cloudflare Pages deployment
-      uses: altinukshini/deployment-action@fe2fba14b486343ce6893cff73b80e153063917a # releases/v1
+      uses: chainguard-actions/altinukshini-deployment-action@4d841685dc46645e6cb5dd330b37f7d47224e127 # releases/v1
       with:
         token: "${{ inputs.github-token }}"
         target_url: "${{ steps.get-deployment.outputs.url }}"
