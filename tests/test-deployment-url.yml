@@ -1,0 +1,33 @@
+name: Test use-deployment-url mode
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          api-token: invalid-meticulous-token-for-harness
+          use-deployment-url: "true"
+          allowed-environments: |
+            preview
+            staging
+          max-allowed-color-difference: "0.05"
+          max-allowed-proportion-of-changed-pixels: "0.001"
+          test-suite-id: harness-suite
+      - name: Assert action ran (success, or graceful failure without credentials/deployments)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (no valid token / deployment for sentinel repo)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

@@ -1,0 +1,57 @@
+import { getInput } from "@actions/core";
+import { AssetUploadMetadata } from "@alwaysmeticulous/api";
+
+export interface UploadAssetsInputs {
+  apiToken: string;
+  githubToken: string;
+  appDirectory: string;
+  rewrites: AssetUploadMetadata["rewrites"];
+  baseApiUrl?: string;
+  commitSha?: string;
+  baseWorkflowRunId?: string;
+  baseCommitSha?: string;
+}
+
+export const getUploadAssetsInputs = (): UploadAssetsInputs => {
+  const apiToken = getInput("api-token", { required: true });
+  const githubToken = getInput("github-token", { required: true });
+  const appDirectory = getInput("app-directory", { required: true });
+  const rewrites = JSON.parse(getInput("rewrites") || "[]");
+  const baseApiUrl = getInput("base-api-url", { required: false }) || undefined;
+  const commitSha = getInput("commit-sha", { required: false }) || undefined;
+  const baseWorkflowRunId =
+    getInput("base-workflow-run-id", { required: false }) || undefined;
+  const baseCommitSha =
+    getInput("base-commit-sha", { required: false }) || undefined;
+
+  if (!Array.isArray(rewrites)) {
+    throw new Error("Rewrites must be an array");
+  }
+
+  for (const rule of rewrites) {
+    if (typeof rule !== "object" || rule === null) {
+      throw new Error("Each rewrite rule must be an object");
+    }
+
+    if (typeof rule.source !== "string") {
+      throw new Error("Each rewrite rule must have a string 'source' property");
+    }
+
+    if (typeof rule.destination !== "string") {
+      throw new Error(
+        "Each rewrite rule must have a string 'destination' property"
+      );
+    }
+  }
+
+  return {
+    apiToken,
+    githubToken,
+    appDirectory,
+    rewrites,
+    baseApiUrl,
+    commitSha,
+    baseWorkflowRunId,
+    baseCommitSha,
+  };
+};

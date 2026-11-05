@@ -1,0 +1,15 @@
+{
+  "status": "unbundlable",
+  "entries": [
+    {
+      "path": "../out/cloud-compute.entrypoint.js",
+      "status": "unbundlable",
+      "reason": "entry path is absolute or escapes the action root"
+    },
+    {
+      "path": "../out/cloud-compute.post-step.entrypoint.js",
+      "status": "unbundlable",
+      "reason": "entry path is absolute or escapes the action root"
+    }
+  ]
+}

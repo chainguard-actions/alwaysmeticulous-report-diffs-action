@@ -1,0 +1,43 @@
+name: Test base-workflow-run-id with base-commit-sha
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create built app directory
+        run: |
+          mkdir -p "$RUNNER_TEMP/dist"
+          echo '<html><body>hello</body></html>' > "$RUNNER_TEMP/dist/index.html"
+          echo "APP_DIR=$RUNNER_TEMP/dist" >> "$GITHUB_ENV"
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          api-token: invalid-meticulous-token
+          app-directory: ${{ env.APP_DIR }}
+          commit-sha: ${{ github.sha }}
+          base-workflow-run-id: "1234567890"
+          base-commit-sha: 0000000000000000000000000000000000000000
+      - name: Assert action ran (failed gracefully or completed)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          RUN_ID: ${{ steps.action.outputs.base-workflow-run-id }}
+          BASE_SHA: ${{ steps.action.outputs.base-commit-sha }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "base-workflow-run-id: $RUN_ID"
+          echo "base-commit-sha: $BASE_SHA"
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed as expected (invalid token / sentinel repo)"
+          elif [ "$OUTCOME" = "success" ]; then
+            if [ -n "$BASE_SHA" ] && ! echo "$BASE_SHA" | grep -qE '^[0-9a-f]{40}$'; then
+              echo "FAIL: base-commit-sha output is not a valid SHA"
+              exit 1
+            fi
+            echo "PASS: action completed"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

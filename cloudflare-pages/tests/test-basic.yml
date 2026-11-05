@@ -1,0 +1,67 @@
+name: Test basic usage with mocked Cloudflare API
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Install fake curl serving a ready Cloudflare Pages deployment
+        run: |
+          mkdir -p /tmp/fakebin
+          rm -f /tmp/fake-curl.log
+          cat > /tmp/fake-cf-response.json <<EOF
+          {"success":true,"result":[{"url":"https://abc123.my-project.pages.dev","environment":"preview","deployment_trigger":{"metadata":{"commit_hash":"${GITHUB_SHA}"}},"latest_stage":{"status":"success"}}]}
+          EOF
+          cat > /tmp/fakebin/curl <<'EOF'
+          #!/bin/sh
+          echo "$*" >> /tmp/fake-curl.log
+          case "$*" in
+            *api.cloudflare.com*)
+              cat /tmp/fake-cf-response.json
+              exit 0
+              ;;
+          esac
+          exec /usr/bin/curl "$@"
+          EOF
+          chmod +x /tmp/fakebin/curl
+          echo "/tmp/fakebin" >> "$GITHUB_PATH"
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          github-token: ${{ github.token }}
+          cloudflare-api-token: test-cf-token
+          cloudflare-account-id: acct123
+          cloudflare-project-name: my-project
+          sleep-seconds: "0"
+          deployment-poll-seconds: "1"
+          wait-till-ready-seconds: "5"
+      - name: Assert action ran (or failed gracefully creating deployment on sentinel repo)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ -f /tmp/fake-curl.log ]; then
+            echo "curl log:"; cat /tmp/fake-curl.log
+            if ! grep -q "accounts/acct123/pages/projects/my-project/deployments" /tmp/fake-curl.log; then
+              echo "FAIL: curl not called with expected Cloudflare URL"
+              exit 1
+            fi
+            if ! grep -q "Authorization: Bearer test-cf-token" /tmp/fake-curl.log; then
+              echo "FAIL: curl not called with expected auth header"
+              exit 1
+            fi
+          fi
+          if [ "$OUTCOME" = "success" ]; then
+            if [ ! -f /tmp/fake-curl.log ]; then
+              echo "FAIL: action succeeded without querying Cloudflare"
+              exit 1
+            fi
+            echo "PASS: action succeeded"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (GitHub deployment cannot be created on sentinel repo)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

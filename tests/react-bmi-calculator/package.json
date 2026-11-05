@@ -1,0 +1,54 @@
+{
+	"name": "bmical",
+	"version": "0.1.0",
+	"private": true,
+	"homepage": "http://localhost:3000/",
+	"dependencies": {
+		"@types/jest": "24.0.20",
+		"chart.js": "2.9.4",
+		"materialize-css": "1.0.0",
+		"prop-types": "15.7.2",
+		"react": "16.11.0",
+		"react-chartjs-2": "2.8.0",
+		"react-dom": "16.11.0",
+		"react-scripts": "^5.0.1",
+		"uuid": "3.3.3"
+	},
+	"pnpm": {
+		"overrides": {
+			"postcss": "^8.4.31"
+		},
+		"overrideNotes": {
+			"postcss": "https://nvd.nist.gov/vuln/detail/CVE-2023-44270"
+		}
+	},
+	"scripts": {
+		"start": "react-scripts start",
+		"build": "react-scripts build",
+		"eject": "react-scripts eject",
+		"serve": "serve -s build",
+		"predeploy": "npm run build",
+		"deploy": "gh-pages -d build"
+	},
+	"eslintConfig": {
+		"extends": "react-app"
+	},
+	"packageManager": "pnpm@10.27.0",
+	"browserslist": {
+		"production": [
+			">0.2%",
+			"not dead",
+			"not op_mini all"
+		],
+		"development": [
+			"last 1 chrome version",
+			"last 1 firefox version",
+			"last 1 safari version"
+		]
+	},
+	"devDependencies": {
+		"eslint": "^8.56.0",
+		"eslint-config-react-app": "^7.0.1",
+		"serve": "^14.1.2"
+	}
+}
