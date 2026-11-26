@@ -1,0 +1,48 @@
+name: "Meticulous - Report Diffs (Cloud Compute) [Removed]"
+description: |
+  Removed. This action tested a locally-served app through a secure tunnel, which is no longer supported.
+  It now always fails. Migrate to `upload-assets` or `upload-container`: https://app.meticulous.ai/docs/github-actions-v2
+# Former inputs stay declared so existing workflows reach the migration error instead of
+# "Unexpected input" warnings. They are ignored.
+inputs:
+  api-token:
+    description: "Ignored. This action has been removed."
+    required: false
+  github-token:
+    description: "Ignored. This action has been removed."
+    required: false
+  app-url:
+    description: "Ignored. This action has been removed."
+    required: false
+  head-sha:
+    description: "Ignored. This action has been removed."
+    required: false
+  projects-yaml:
+    description: "Ignored. This action has been removed."
+    required: false
+  secure-tunnel-host:
+    description: "Ignored. This action has been removed."
+    required: false
+  rewrite-hostname-to-app-url:
+    description: "Ignored. This action has been removed."
+    required: false
+  proxy-all-urls:
+    description: "Ignored. This action has been removed."
+    required: false
+  companion-assets-folder:
+    description: "Ignored. This action has been removed."
+    required: false
+  companion-assets-regex:
+    description: "Ignored. This action has been removed."
+    required: false
+  base-api-url:
+    description: "Ignored. This action has been removed."
+    required: false
+
+outputs: {}
+runs:
+  using: node24
+  main: "../out/cloud-compute.entrypoint.js"
+branding:
+  color: purple
+  icon: camera

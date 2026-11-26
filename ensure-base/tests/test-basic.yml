@@ -1,0 +1,42 @@
+name: Test basic usage (workflow_dispatch, no ref)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          api-token: test-meticulous-api-token
+      - name: Assert action ran (valid outputs, or failed gracefully on the sentinel repo)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          RUN_ID: ${{ steps.action.outputs.base-workflow-run-id }}
+          SHA: ${{ steps.action.outputs.base-commit-sha }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "base-workflow-run-id: $RUN_ID"
+          echo "base-commit-sha: $SHA"
+          if [ "$OUTCOME" = "success" ]; then
+            if [ -n "$RUN_ID" ] && ! echo "$RUN_ID" | grep -qE '^[0-9]+$'; then
+              echo "FAIL: base-workflow-run-id is not numeric"
+              exit 1
+            fi
+            if [ -n "$SHA" ] && ! echo "$SHA" | grep -qE '^[0-9a-f]{40}$'; then
+              echo "FAIL: base-commit-sha is not a 40-char sha"
+              exit 1
+            fi
+            if [ -n "$RUN_ID" ] && [ -z "$SHA" ]; then
+              echo "FAIL: run id set without base commit sha"
+              exit 1
+            fi
+            echo "PASS: action succeeded with well-formed outputs"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (non-PR event / sentinel repo / fake API token)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

@@ -1,0 +1,64 @@
+name: Test deployment never ready (timeout)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Install fake curl serving no matching deployment
+        run: |
+          FAKE="$RUNNER_TEMP/fakebin"
+          mkdir -p "$FAKE"
+          cat > "$RUNNER_TEMP/cf-payload.json" <<'EOF'
+          {"success":true,"result":[{"url":"https://other.my-project.pages.dev","environment":"preview","latest_stage":{"status":"active"},"deployment_trigger":{"metadata":{"commit_hash":"0000000000000000000000000000000000000000"}}}]}
+          EOF
+          cat > "$FAKE/curl" <<EOF
+          #!/bin/sh
+          echo "\$*" >> "$RUNNER_TEMP/curl.log"
+          case "\$*" in
+            *api.cloudflare.com*)
+              out=""
+              prev=""
+              for arg in "\$@"; do
+                case "\$prev" in -o|--output) out="\$arg" ;; esac
+                prev="\$arg"
+              done
+              if [ -n "\$out" ]; then cat "$RUNNER_TEMP/cf-payload.json" > "\$out"; else cat "$RUNNER_TEMP/cf-payload.json"; fi
+              exit 0
+              ;;
+          esac
+          exec /usr/bin/curl "\$@"
+          EOF
+          chmod +x "$FAKE/curl"
+          echo "$FAKE" >> "$GITHUB_PATH"
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          github-token: ${{ github.token }}
+          cloudflare-api-token: test-cf-token
+          cloudflare-account-id: acct123
+          cloudflare-project-name: my-project
+          sleep-seconds: "0"
+          deployment-poll-seconds: "1"
+          wait-till-ready-seconds: "1"
+      - name: Assert action failed because deployment never became ready
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          LOG="$RUNNER_TEMP/curl.log"
+          if [ -f "$LOG" ]; then
+            echo "curl calls:"; cat "$LOG"
+            CALLS=$(grep -c "api.cloudflare.com" "$LOG")
+            if [ "$CALLS" -lt 2 ]; then
+              echo "FAIL: expected the action to poll more than once, got $CALLS"
+              exit 1
+            fi
+          fi
+          if [ "$OUTCOME" != "failure" ]; then
+            echo "FAIL: expected failure when deployment never becomes ready"
+            exit 1
+          fi
+          echo "PASS"
